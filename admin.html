@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel — FJU Olímpia</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f7ff">
+  <link rel="icon" href="img/logo-tema-claro.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script src="js/tema.js"></script>
+</head>
+<body>
+  <header class="topo compacto">
+    <div class="barra">
+      <a class="marca" href="admin.html">
+        <img class="logo-claro" src="img/logo-tema-claro.png" alt="FJU — Força Jovem Universal">
+        <img class="logo-escuro" src="img/logo-tema-escuro.png" alt="FJU — Força Jovem Universal">
+        <span class="cidade">Olímpia</span>
+      </a>
+      <button id="trocar-tema" class="trocar-tema" type="button" aria-label="Trocar tema">🌙</button>
+    </div>
+    <div class="hero">
+      <span class="pill">🔒 Área da equipe</span>
+      <h1>Painel de <em>cadastros</em></h1>
+    </div>
+  </header>
+
+  <!-- Login -->
+  <main id="tela-login" class="login oculto">
+    <form id="form-login" class="cartao">
+      <div class="secao-titulo">
+        <span class="passo">🔑</span>
+        <div><h2>Entrar</h2><p>Use o login criado no Supabase</p></div>
+      </div>
+      <div class="campo">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" autocomplete="current-password" required>
+      </div>
+      <div id="erro-login" class="erro oculto" role="alert"></div>
+      <button class="botao cheio" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <!-- Painel -->
+  <main id="tela-painel" class="container largo oculto">
+    <div class="cartao barra-topo">
+      <span id="usuario"></span>
+      <div>
+        <button id="atualizar" class="botao secundario pequeno" type="button">↻ Atualizar</button>
+        <button id="sair" class="botao secundario pequeno" type="button">Sair</button>
+      </div>
+    </div>
+
+    <div id="sem-permissao" class="aviso oculto">
+      Sua conta entrou, mas ainda não está na lista de administradores.
+      Peça para alguém rodar no Supabase: <code>insert into public.admins (email) values ('seu-email');</code>
+    </div>
+
+    <div class="numeros">
+      <div class="numero destaque"><i>👥</i><b id="n-total">0</b><span>cadastrados</span></div>
+      <div class="numero"><i>🏆</i><b id="n-campeonato">0</b><span>topam campeonato</span></div>
+      <div class="numero"><i>🙏</i><b id="n-sem-igreja">0</b><span>não frequentam igreja</span></div>
+      <div class="numero"><i>🔎</i><b id="n-filtrados">0</b><span>no filtro atual</span></div>
+    </div>
+
+    <details id="caixa-filtros" class="cartao filtros-caixa">
+      <summary><span>Filtros <span id="filtros-ativos" class="oculto"></span></span></summary>
+      <div class="filtros">
+        <div class="inteiro">
+          <label for="f-busca">Buscar nome / telefone</label>
+          <input id="f-busca" type="search" placeholder="Digite...">
+        </div>
+        <div>
+          <label for="f-esporte">Joga</label>
+          <select id="f-esporte"><option value="">Qualquer esporte</option></select>
+        </div>
+        <div>
+          <label for="f-preferido">Esporte preferido</label>
+          <select id="f-preferido"><option value="">Qualquer</option></select>
+        </div>
+        <div>
+          <label for="f-campeonato">Topa campeonato</label>
+          <select id="f-campeonato">
+            <option value="">Todos</option>
+            <option value="sim">Sim</option>
+            <option value="sim,talvez">Sim ou talvez</option>
+            <option value="talvez">Talvez</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-sexo">Menino / menina</label>
+          <select id="f-sexo">
+            <option value="">Todos</option>
+            <option value="menino">Meninos</option>
+            <option value="menina">Meninas</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-igreja">Frequenta igreja</label>
+          <select id="f-igreja">
+            <option value="">Todos</option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-bairro">Bairro</label>
+          <select id="f-bairro"><option value="">Todos</option></select>
+        </div>
+        <div>
+          <label for="f-idade-min">Idade mínima</label>
+          <input id="f-idade-min" type="number" inputmode="numeric" min="0" max="120">
+        </div>
+        <div>
+          <label for="f-idade-max">Idade máxima</label>
+          <input id="f-idade-max" type="number" inputmode="numeric" min="0" max="120">
+        </div>
+      </div>
+    </details>
+
+    <section class="cartao">
+      <div id="contagem-esportes" class="contagem-esportes"></div>
+      <div class="acoes">
+        <button id="exportar" class="botao pequeno" type="button">⬇ Baixar planilha (CSV)</button>
+        <button id="copiar-zaps" class="botao secundario pequeno" type="button">Copiar telefones</button>
+        <button id="limpar" class="botao secundario pequeno" type="button">Limpar filtros</button>
+      </div>
+    </section>
+
+    <section class="cartao lista-cartao">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>WhatsApp</th>
+            <th>Idade · sexo</th>
+            <th>Endereço</th>
+            <th>Esportes</th>
+            <th>Campeonato</th>
+            <th>Igreja</th>
+            <th>Cadastro</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="linhas"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="rodape"><a href="index.html">Ir para o formulário de cadastro</a></footer>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

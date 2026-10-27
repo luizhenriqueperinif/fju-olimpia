@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cadastro de Jovens — FJU Olímpia</title>
+  <meta name="description" content="Cadastro de jovens da FJU Olímpia para jogos e campeonatos.">
+  <meta name="theme-color" content="#f4f7ff">
+  <link rel="icon" href="img/logo-tema-claro.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script src="js/tema.js"></script>
+</head>
+<body>
+  <header class="topo">
+    <div class="barra">
+      <a class="marca" href="index.html">
+        <img class="logo-claro" src="img/logo-tema-claro.png" alt="FJU — Força Jovem Universal">
+        <img class="logo-escuro" src="img/logo-tema-escuro.png" alt="FJU — Força Jovem Universal">
+        <span class="cidade">Olímpia</span>
+      </a>
+      <button id="trocar-tema" class="trocar-tema" type="button" aria-label="Trocar tema">🌙</button>
+    </div>
+    <div class="hero">
+      <span class="pill">⚡ Esportes FJU</span>
+      <h1>Cadastro de<br><em>jovens</em></h1>
+      <p>Cadastre os jovens para os jogos, treinos e campeonatos da FJU Olímpia.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="aviso-config" class="aviso oculto">
+      O sistema ainda não foi configurado. Preencha <code>js/config.js</code> com os dados do Supabase.
+    </div>
+
+    <form id="formulario" novalidate>
+      <section class="cartao">
+        <div class="secao-titulo">
+          <span class="passo">👤</span>
+          <div><h2>Dados do jovem</h2><p>Contato e endereço</p></div>
+        </div>
+
+        <div class="campo">
+          <label for="nome">Nome completo <span class="obrigatorio">*</span></label>
+          <input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" placeholder="Nome do jovem" required>
+        </div>
+
+        <div class="campo">
+          <span class="rotulo">Menino ou menina? <span class="obrigatorio">*</span></span>
+          <div class="opcoes">
+            <label class="chip"><input type="radio" name="sexo" value="menino"><span>Menino</span></label>
+            <label class="chip"><input type="radio" name="sexo" value="menina"><span>Menina</span></label>
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label for="telefone">WhatsApp do jovem <span class="obrigatorio">*</span></label>
+            <input id="telefone" name="telefone" type="tel" inputmode="numeric" placeholder="(17) 99999-9999" autocomplete="tel" required>
+          </div>
+          <div class="campo">
+            <label for="data_nascimento">Data de nascimento <small>(opcional)</small></label>
+            <input id="data_nascimento" name="data_nascimento" type="date">
+          </div>
+        </div>
+
+        <div class="linha">
+          <div class="campo">
+            <label for="endereco">Endereço <span class="obrigatorio">*</span></label>
+            <input id="endereco" name="endereco" type="text" autocomplete="street-address" maxlength="200" placeholder="Rua e número" required>
+          </div>
+          <div class="campo">
+            <label for="bairro">Bairro <span class="obrigatorio">*</span></label>
+            <input id="bairro" name="bairro" type="text" maxlength="80" placeholder="Bairro" required>
+          </div>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <div class="secao-titulo">
+          <span class="passo">🏆</span>
+          <div><h2>Esportes</h2><p>Marque todos que o jovem joga</p></div>
+        </div>
+
+        <div class="campo">
+          <span class="rotulo">Quais esportes o jovem joga? <span class="obrigatorio">*</span></span>
+          <div id="lista-esportes" class="chips"></div>
+          <input id="outro-esporte" type="text" maxlength="40" placeholder="Qual outro esporte?" class="oculto" style="margin-top:10px">
+        </div>
+
+        <div class="campo">
+          <label for="esporte_preferido">Qual é o preferido dele(a)? <span class="obrigatorio">*</span></label>
+          <select id="esporte_preferido" name="esporte_preferido" required>
+            <option value="">Marque os esportes acima primeiro</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <span class="rotulo">O jovem topa participar de campeonatos? <span class="obrigatorio">*</span></span>
+          <div class="opcoes">
+            <label class="chip"><input type="radio" name="topa_campeonatos" value="sim"><span>🔥 Bora!</span></label>
+            <label class="chip"><input type="radio" name="topa_campeonatos" value="talvez"><span>🤔 Talvez</span></label>
+            <label class="chip"><input type="radio" name="topa_campeonatos" value="nao"><span>Não</span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <div class="secao-titulo">
+          <span class="passo">⛪</span>
+          <div><h2>Igreja</h2><p>Para conhecermos melhor o jovem</p></div>
+        </div>
+
+        <div class="campo">
+          <span class="rotulo">O jovem já frequenta alguma igreja regularmente? <span class="obrigatorio">*</span></span>
+          <div class="opcoes">
+            <label class="chip"><input type="radio" name="frequenta_igreja" value="sim"><span>Sim</span></label>
+            <label class="chip"><input type="radio" name="frequenta_igreja" value="nao"><span>Não</span></label>
+          </div>
+        </div>
+
+        <div id="campo-igreja" class="campo oculto">
+          <label for="igreja_nome">Qual igreja? <small>(opcional)</small></label>
+          <input id="igreja_nome" name="igreja_nome" type="text" maxlength="120">
+        </div>
+      </section>
+
+      <!-- campo invisível contra robôs -->
+      <input class="armadilha" type="text" name="site" id="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <section class="cartao envio">
+        <div id="erro" class="erro oculto" role="alert"></div>
+
+        <button id="enviar" class="botao cheio" type="submit">Cadastrar jovem →</button>
+        <p class="seguro">🔒 Os dados ficam guardados com segurança</p>
+      </section>
+    </form>
+
+    <section id="tela-sucesso" class="cartao sucesso oculto">
+      <div class="icone">🏆</div>
+      <h2>Jovem cadastrado!</h2>
+      <p>Pronto, ele já aparece na lista do painel.</p>
+      <button id="novo" class="botao" type="button">+ Cadastrar outro jovem</button>
+    </section>
+  </main>
+
+  <footer class="rodape"><a href="admin.html">Área da equipe</a></footer>
+
+  <script type="module" src="js/cadastro.js"></script>
+</body>
+</html>
