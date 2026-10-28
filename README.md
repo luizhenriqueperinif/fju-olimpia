@@ -18,7 +18,8 @@ Tudo roda de graça: o banco fica no **Supabase** e o site no **Netlify**.
 1. Crie uma conta em <https://supabase.com> e clique em **New project**
    (região: *South America (São Paulo)*). Guarde a senha do banco.
 2. No menu lateral, abra **SQL Editor → New query**, cole todo o conteúdo de
-   `supabase/schema.sql` e clique em **Run**.
+   `supabase/schema.sql` e clique em **Run**. Depois faça o mesmo com
+   `supabase/torneios.sql` e `supabase/ao_vivo.sql`, nessa ordem.
 3. Vá em **Authentication → Sign In / Providers** e **desligue** "Allow new users to sign up"
    (assim ninguém de fora cria conta).
 4. Vá em **Authentication → Users → Add user → Create new user**, coloque seu e-mail e uma
