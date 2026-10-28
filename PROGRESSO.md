@@ -14,11 +14,9 @@ O projeto Supabase foi recriado do zero (ref `liuemzlynonyawezdcgl`, org "FJU Ol
 Já rodado nele: `schema.sql` + `torneios.sql` + admin `luizhenriqueperinif@gmail.com`.
 `js/config.js` aponta para ele (usando a publishable key). Site publicado com o painel novo.
 
-Falta no Supabase (fazer pelo painel, com a senha escolhida pela pessoa):
-1. Authentication → Users → Add user → Create new user (e-mail do admin + senha, marcar "Auto Confirm").
-2. Authentication → Sign In / Providers → desligar "Allow new users to sign up".
+Login do admin criado e cadastros novos (sign up) desligados.
 
-## Painel novo (torneios) — publicado, falta testar os torneios
+## Painel novo (torneios) — publicado e testado
 
 Publicado:
 - `admin.html` + `css/painel.css` + `js/painel/`:
@@ -30,9 +28,9 @@ Publicado:
 - O `js/admin.js` antigo foi removido.
 - Testado no navegador (banco antigo): Início, Jovens e Ficha funcionam.
 
-Próximos passos:
-1. Testar um torneio de ponta a ponta (criar → inscrever → sortear times → gerar jogos →
-   lançar placares → próxima fase → campeão) no celular.
+Teste completo feito no site publicado (28/10): criar torneio → sugestão de inscritos →
+sortear 4 times → grupo → final com pênaltis → campeão, tabela, artilharia e ficha do jovem.
+Os dados de teste foram apagados; o banco está zerado.
 
 ## Outras ideias anotadas
 - Campo "Cadastrado por" (quem da equipe fez o cadastro) — sugerido, ainda não confirmado.
