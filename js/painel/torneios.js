@@ -499,8 +499,9 @@ async function inserirJogos(lista) {
 }
 
 const jogosMataMata = ({ fase, jogos }, rodada) => jogos.map(([a, b], i) => ({
+  // num insert em lote, toda linha precisa ter as mesmas colunas (senão as ausentes viram null)
   fase, mata_mata: true, rodada, ordem: i, time_a: a, time_b: b,
-  ...(b == null ? { encerrado: true, vencedor_id: a } : {}),
+  encerrado: b == null, vencedor_id: b == null ? a : null,
 }));
 
 function textoJogosZap() {
