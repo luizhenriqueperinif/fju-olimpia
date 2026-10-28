@@ -13,12 +13,13 @@
   <link rel="stylesheet" href="css/estilo.css">
   <script src="js/tema.js"></script>
   <script>
-    // Quem já entrou no painel neste aparelho vai direto para o início do painel.
-    // O formulário continua acessível pelo botão "Cadastrar" do painel (index.html#cadastrar).
+    // O cadastro é só para os admins: quem não entrou vai para o login do painel,
+    // e quem já entrou cai no início do painel. O formulário abre pelo botão
+    // "Cadastrar" do painel (index.html#cadastrar).
     try {
       const logado = Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k));
-      if (logado && location.hash !== "#cadastrar") location.replace("admin.html");
-    } catch {}
+      if (!logado || location.hash !== "#cadastrar") location.replace("admin.html");
+    } catch { location.replace("admin.html"); }
   </script>
 </head>
 <body>

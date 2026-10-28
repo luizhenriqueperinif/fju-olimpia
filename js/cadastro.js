@@ -11,6 +11,18 @@ const botaoEnviar = document.getElementById("enviar");
 
 if (!configurado) document.getElementById("aviso-config").classList.remove("oculto");
 
+// Só admins cadastram: sem login (ou sem permissão) volta para o painel
+async function conferirAdmin() {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return location.replace("admin.html");
+  const { data: ehAdmin } = await supabase.rpc("is_admin");
+  if (!ehAdmin) location.replace("admin.html");
+}
+if (configurado) {
+  conferirAdmin();
+  supabase.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_OUT") location.replace("admin.html"); });
+}
+
 listaEsportes.innerHTML = [...ESPORTES, "Outro"]
   .map((e) => `<label class="chip"><input type="checkbox" value="${escapeHtml(e)}"><span><i>${ICONES[e]}</i>${escapeHtml(e)}</span></label>`)
   .join("");
@@ -112,6 +124,7 @@ form.addEventListener("submit", async (ev) => {
 
   if (error) {
     console.error(error);
+    if (error.code === "42501") return mostrarErro("Sua sessão expirou ou você não tem permissão. Entre de novo no painel.");
     return mostrarErro("Não foi possível salvar agora. Verifique a internet e tente de novo.");
   }
   mostrarSucesso();

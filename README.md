@@ -4,7 +4,7 @@ Site para cadastrar a galera (nome, WhatsApp, endereço, esportes, esporte prefe
 se topa campeonatos e se frequenta igreja) e um painel da equipe para filtrar,
 exportar para Excel e chamar no WhatsApp.
 
-- `index.html` — formulário público de cadastro (é esse link que vocês divulgam)
+- `index.html` — formulário de cadastro, só para admins logados (abre pelo botão "Cadastrar" do painel)
 - `admin.html` — painel com login, filtros, contagem por esporte, exportar CSV, excluir
 - `supabase/schema.sql` — cria o banco de dados e as regras de segurança
 - `js/config.js` — onde vão as chaves do Supabase
@@ -83,8 +83,8 @@ Exemplo para montar um campeonato de futsal: *Joga = Futsal* + *Topa campeonato 
 
 ## Bom saber
 
-- **Segurança**: qualquer pessoa consegue *enviar* um cadastro, mas só e-mails que estão na
-  tabela `admins` conseguem *ver* os dados. A chave "anon" no `config.js` pode ser pública.
+- **Segurança**: só e-mails que estão na tabela `admins` conseguem cadastrar, ver, editar e
+  excluir jovens (o banco recusa qualquer outro). A chave "anon" no `config.js` pode ser pública.
 - **LGPD**: o formulário pede autorização para guardar os dados. Se alguém pedir para sair,
   é só excluir pelo painel.
 - **Plano grátis do Supabase**: o projeto é pausado se ficar 7 dias sem nenhum acesso.

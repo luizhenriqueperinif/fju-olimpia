@@ -49,18 +49,19 @@ $$;
 
 grant execute on function public.is_admin() to authenticated;
 
-grant insert on public.cadastros to anon, authenticated;
-grant select, update, delete on public.cadastros to authenticated;
+grant select, insert, update, delete on public.cadastros to authenticated;
 
 -- ---------- Segurança (Row Level Security) ----------
 alter table public.cadastros enable row level security;
 alter table public.admins    enable row level security;  -- sem policies = ninguém acessa pela API
 
+-- só os admins cadastram jovens (o formulário exige login)
 drop policy if exists "qualquer pessoa pode se cadastrar" on public.cadastros;
-create policy "qualquer pessoa pode se cadastrar"
+drop policy if exists "admins podem cadastrar" on public.cadastros;
+create policy "admins podem cadastrar"
   on public.cadastros for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (public.is_admin());
 
 drop policy if exists "admins podem ver" on public.cadastros;
 create policy "admins podem ver"

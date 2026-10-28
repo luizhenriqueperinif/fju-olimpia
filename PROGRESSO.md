@@ -2,7 +2,9 @@
 
 ## O que já está pronto e no ar
 
-- **Formulário de cadastro** (a equipe cadastra os jovens): <https://fju-olimpia.pages.dev>
+- **Formulário de cadastro** — só para admins logados: o link principal <https://fju-olimpia.pages.dev>
+  leva ao login do painel, e o formulário abre pelo botão "Cadastrar" (`index.html#cadastrar`).
+  No banco, a policy de insert em `cadastros` também exige `is_admin()` (anon não grava mais).
 - **Painel** (jovens + torneios): <https://fju-olimpia.pages.dev/admin>
 - Banco no Supabase, projeto `banco-fju-olimpia` (conta luizhenriqueperinif@gmail.com).
 - Site hospedado no Cloudflare Pages, projeto `fju-olimpia` (ver comando de publicação no README).
