@@ -500,3 +500,70 @@ button.item, a.item { cursor: pointer; }
   body.painel { padding-bottom: 100px; }
   .barra-selecao { bottom: 96px; }
 }
+
+/* ---------- Jogo ao vivo ---------- */
+.selo-vivo {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--vermelho); font-weight: 800; letter-spacing: .4px;
+}
+.selo-vivo::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--vermelho);
+  animation: pisca 1.2s ease-in-out infinite;
+}
+@keyframes pisca { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .selo-vivo::before { animation: none; } }
+.jogo.vivo { border-color: var(--vermelho); }
+
+.placar-vivo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px 10px;
+  padding: 18px 16px;
+  border-radius: 20px;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  box-shadow: var(--sombra);
+}
+.placar-time { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
+.placar-time b { font-size: 1rem; overflow-wrap: anywhere; }
+.placar-time .bolinha { width: 14px; height: 14px; }
+.placar-numeros { display: flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+.placar-numeros b { font-size: 3rem; line-height: 1; font-weight: 800; color: var(--titulo); }
+.placar-numeros span { color: var(--texto-suave); font-size: 1.4rem; }
+.cronometro { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cronometro .periodo { font-size: .72rem; font-weight: 700; letter-spacing: .6px; color: var(--texto-suave); }
+.cronometro .tempo { font-size: 2.2rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--texto-suave); }
+.cronometro.rodando .tempo { color: var(--titulo); }
+.controles-relogio { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.placar-vivo > .encerrar-jogo { grid-column: 1 / -1; color: var(--vermelho); }
+
+.numeros-lances { display: flex; flex-direction: column; gap: 6px; }
+.numero-lance {
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; text-align: center;
+  padding: 6px 10px; border-radius: 12px; background: var(--campo); font-size: .8rem; color: var(--texto-suave);
+}
+.numero-lance b { font-size: 1.1rem; color: var(--titulo); font-variant-numeric: tabular-nums; }
+.numero-lance b.alerta { color: var(--vermelho); }
+
+.grade-lances { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lado-lances { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lado-nome { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; font-weight: 800; font-size: .9rem; text-align: center; overflow-wrap: anywhere; }
+.botao-lance {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 52px; padding: 10px 12px;
+  border-radius: 14px; border: 1px solid var(--borda);
+  background: var(--cartao); color: var(--texto);
+  font: inherit; font-weight: 700; font-size: .92rem; text-align: left; cursor: pointer;
+  touch-action: manipulation;
+}
+.botao-lance span { font-size: 1.25rem; }
+.botao-lance:active { transform: scale(.97); background: var(--campo-hover); }
+.botao-lance.gol { background: var(--primaria); border-color: var(--primaria); color: #fff; min-height: 64px; font-size: 1.05rem; }
+.botao-lance:disabled { opacity: .5; cursor: default; }
+
+.lance { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--borda); }
+.lance:last-child { border-bottom: 0; }
+.lance-tempo { display: flex; flex-direction: column; align-items: center; width: 46px; font-weight: 800; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.lance-tempo small { font-size: .65rem; color: var(--texto-suave); font-weight: 700; }
+.lance-emoji { font-size: 1.2rem; }

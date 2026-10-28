@@ -2,6 +2,7 @@ import { configurado } from "../comum.js";
 import { supabase, render, carregando, icone, fecharSheet, esquecerCadastros, e } from "./nucleo.js";
 import { telaInicio, telaJovens, telaJovem } from "./jovens.js";
 import { telaTorneios, telaFormTorneio, telaTorneio } from "./torneios.js";
+import { telaJogo } from "./aovivo.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,6 +22,7 @@ const ROTAS = [
   [/^#\/torneios\/novo$/, "torneios", () => telaFormTorneio()],
   [/^#\/torneio\/(\d+)\/editar$/, "torneios", (id) => telaFormTorneio(Number(id))],
   [/^#\/torneio\/(\d+)(?:\/(\w+))?$/, "torneios", (id, aba) => telaTorneio(Number(id), aba || "inscritos")],
+  [/^#\/jogo\/(\d+)$/, "torneios", (id) => telaJogo(Number(id))],
 ];
 
 let rotaAnterior = null;
@@ -45,7 +47,10 @@ async function rotear() {
   } catch (erro) {
     console.error(erro);
     const faltaTabela = /schema cache|does not exist/i.test(erro?.message ?? "");
-    render(`<div class="pagina"><div class="aviso">${faltaTabela
+    const faltaAoVivo = /eventos|cronometro|periodo/i.test(erro?.message ?? "");
+    render(`<div class="pagina"><div class="aviso">${faltaAoVivo
+      ? "O banco ainda não tem a parte de jogo ao vivo. Rode o arquivo <code>supabase/ao_vivo.sql</code> no SQL Editor do Supabase."
+      : faltaTabela
       ? "O banco ainda não tem as tabelas de torneio. Rode o arquivo <code>supabase/torneios.sql</code> no SQL Editor do Supabase."
       : "Não foi possível abrir esta tela: " + e(erro?.message ?? erro)}</div></div>`, {});
   }

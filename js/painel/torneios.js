@@ -144,8 +144,9 @@ export async function telaFormTorneio(id) {
 // Dentro do torneio
 // =========================================================
 let ctx = null; // { t, inscritos, times, jogos, gols, cads, porId, timePorId }
+export const contexto = () => ctx;
 
-async function carregarTorneio(id) {
+export async function carregarTorneio(id) {
   const [t, inscritos, times, jogos, cads] = await Promise.all([
     db(supabase.from("torneios").select("*").eq("id", id).single(), "Torneio não encontrado"),
     db(supabase.from("torneio_inscritos").select("cadastro_id, time_id").eq("torneio_id", id)),
@@ -581,14 +582,17 @@ function abaJogos() {
     }
     const v = vencedorDoJogo(j);
     const estado = (id) => (!j.encerrado || v == null ? "" : v === id ? "venceu" : "perdeu");
+    const aoVivo = !j.encerrado && (j.cronometro_inicio || j.cronometro_seg > 0 || j.periodo > 1);
+    const mostraPlacar = j.encerrado || aoVivo;
     const quando = j.encerrado
       ? (j.vencedor_id && j.gols_a === j.gols_b ? "PÊNALTIS" : "ENCERRADO")
+      : aoVivo ? `<span class="selo-vivo">AO VIVO</span>`
       : j.data_hora ? e(dataHora(j.data_hora)).toUpperCase() : "A JOGAR";
     return `
-      <button type="button" class="jogo" data-acao="abrirJogo" data-id="${j.id}">
+      <button type="button" class="jogo ${aoVivo ? "vivo" : ""}" data-acao="abrirJogo" data-id="${j.id}">
         <span class="jogo-times">
-          <span class="${estado(j.time_a)}"><span class="bolinha" style="background:${cor(j.time_a)}"></span>${nome(j.time_a)}<b>${j.encerrado ? j.gols_a : "–"}</b></span>
-          <span class="${estado(j.time_b)}"><span class="bolinha" style="background:${cor(j.time_b)}"></span>${nome(j.time_b)}<b>${j.encerrado ? j.gols_b : "–"}</b></span>
+          <span class="${estado(j.time_a)}"><span class="bolinha" style="background:${cor(j.time_a)}"></span>${nome(j.time_a)}<b>${mostraPlacar ? j.gols_a ?? 0 : "–"}</b></span>
+          <span class="${estado(j.time_b)}"><span class="bolinha" style="background:${cor(j.time_b)}"></span>${nome(j.time_b)}<b>${mostraPlacar ? j.gols_b ?? 0 : "–"}</b></span>
         </span>
         <span class="jogo-quando">${!j.mata_mata && t.formato === "grupos_mata_mata" ? `${e(j.fase)}<br>` : ""}${quando}</span>
       </button>`;
@@ -612,7 +616,7 @@ function abaJogos() {
   return {
     html,
     acoes: {
-      abrirJogo: ({ id }) => editarJogo(ctx.jogos.find((j) => j.id === Number(id))),
+      abrirJogo: ({ id }) => ir(`#/jogo/${id}`),
       proximaFase: async () => {
         await inserirJogos(jogosMataMata(proxima, rodada));
         aviso(`${proxima.fase} gerada!`);
@@ -630,7 +634,8 @@ function abaJogos() {
   };
 }
 
-function editarJogo(j) {
+// Editor do placar "na mão" (também usado pela tela ao vivo para encerrar com pênaltis)
+export function editarJogo(j, depois = () => recarregar("jogos")) {
   const { inscritos, porId, timePorId, gols } = ctx;
   const ta = timePorId.get(j.time_a);
   const tb = timePorId.get(j.time_b);
@@ -709,7 +714,7 @@ function editarJogo(j) {
 
       fecharSheet();
       aviso(fechar ? "Placar salvo!" : "Jogo salvo");
-      recarregar("jogos");
+      depois();
     },
   });
   atualizarPenaltis();
