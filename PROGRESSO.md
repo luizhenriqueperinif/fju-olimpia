@@ -27,7 +27,8 @@ Publicado:
   - `aovivo.js` — jogo ao vivo (`#/jogo/:id`): cronômetro por tempo (1º/2º tempo, prorrogação em
     2 tempos, disputa de pênaltis = período 5), gol/falta/cartões/bola fora
     por time e jogador, lance a lance com desfazer, faltas por tempo, sincroniza entre celulares
-    a cada 4 s. Placar e artilharia saem dos lances de gol.
+    a cada 4 s. Placar e artilharia saem dos lances de gol. Duração dos tempos fica no torneio
+    (`minutos_tempo`, `minutos_prorrogacao`); acréscimo por tempo em `jogos.acrescimo_seg`.
   - `chaveamento.js` — regras dos torneios, testadas (`node tests/chaveamento.test.mjs`).
 - O `js/admin.js` antigo foi removido.
 - Testado no navegador (banco antigo): Início, Jovens e Ficha funcionam.

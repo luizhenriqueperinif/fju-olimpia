@@ -31,3 +31,8 @@ create policy "admins gerenciam" on public.eventos for all to authenticated
 alter table public.eventos drop constraint if exists eventos_tipo_check;
 alter table public.eventos add constraint eventos_tipo_check
   check (tipo in ('gol', 'falta', 'amarelo', 'vermelho', 'fora', 'penalti_gol', 'penalti_fora'));
+
+-- Duração dos tempos (minutos) e acréscimo do tempo atual (segundos)
+alter table public.torneios add column if not exists minutos_tempo       int check (minutos_tempo between 1 and 90);
+alter table public.torneios add column if not exists minutos_prorrogacao int check (minutos_prorrogacao between 1 and 30);
+alter table public.jogos    add column if not exists acrescimo_seg       int not null default 0 check (acrescimo_seg between 0 and 1800);

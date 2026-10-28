@@ -584,3 +584,12 @@ button.item, a.item { cursor: pointer; }
 .botao-lance.penalti_gol { background: var(--verde); border-color: var(--verde); color: #fff; min-height: 64px; }
 .botao-lance.penalti_fora { min-height: 64px; }
 .cobranca .icone { width: 14px; height: 14px; }
+
+/* Duração do tempo e acréscimos */
+.cronometro .extra { font-size: .74rem; font-weight: 700; color: var(--texto-suave); min-height: 1em; text-align: center; }
+.cronometro.acrescimo .tempo, .cronometro.acrescimo .extra { color: var(--ambar); }
+.cronometro.esgotado .tempo, .cronometro.esgotado .extra { color: var(--vermelho); }
+.acrescimo { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: .85rem; color: var(--texto-suave); }
+.acrescimo b { color: var(--titulo); }
+.acrescimo .botao.pequeno { min-height: 40px; padding: 6px 14px; }
+.acrescimo .link-botao { font-size: .8rem; text-align: center; }

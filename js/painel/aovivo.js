@@ -23,6 +23,26 @@ let sincronia = null;   // busca lances de outros celulares a cada poucos segund
 let assinatura = "";    // detecta se algo mudou no banco
 
 const segundosDe = (j) => j.cronometro_seg + (j.cronometro_inicio ? Math.max(0, Math.floor((Date.now() - new Date(j.cronometro_inicio)) / 1000)) : 0);
+// Duração do tempo atual em segundos (null = torneio sem duração definida)
+const duracaoDe = (t, periodo) => {
+  const min = periodo <= 2 ? t.minutos_tempo : periodo <= 4 ? t.minutos_prorrogacao ?? t.minutos_tempo : null;
+  return min ? min * 60 : null;
+};
+// Texto do cronômetro considerando duração e acréscimo
+function situacaoTempo(j, t, s) {
+  const dur = duracaoDe(t, j.periodo);
+  if (!dur || s < dur) return { tempo: mmss(s), extra: dur ? `de ${mmss(dur)}` : "", classe: "" };
+  const acr = j.acrescimo_seg ?? 0;
+  const passou = s - dur;
+  const esgotado = passou >= acr;
+  return {
+    tempo: `${mmss(dur)} +${mmss(passou)}`,
+    extra: esgotado
+      ? (acr ? `TEMPO ESGOTADO (acréscimo de ${acr / 60} min)` : "TEMPO NORMAL ACABOU")
+      : `ACRÉSCIMO +${acr / 60} MIN · faltam ${mmss(acr - passou)}`,
+    classe: esgotado ? "esgotado" : "acrescimo",
+  };
+}
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 // 1 e 2 = tempo normal · 3 e 4 = prorrogação · 5 = pênaltis
 const nomePeriodo = (p) => ["", "1º tempo", "2º tempo", "1º tempo da prorrogação", "2º tempo da prorrogação", "Pênaltis"][p] ?? `${p}º período`;
@@ -58,6 +78,8 @@ export async function telaJogo(id) {
   function desenhar() {
     assinatura = JSON.stringify([j, eventos.map((x) => x.id)]);
     const rodando = !!j.cronometro_inicio;
+    const sit = situacaoTempo(j, t, segundosDe(j));
+    const dur = duracaoDe(t, j.periodo);
     const comecou = rodando || j.cronometro_seg > 0 || j.periodo > 1 || eventos.length > 0;
     // no futsal, as faltas do 2º tempo seguem acumulando na prorrogação
     const futsal = t.esporte === "Futsal";
@@ -70,6 +92,10 @@ export async function telaJogo(id) {
       || `<span class="suave pequeno">nenhuma cobrança</span>`;
     const total = (tm, tipo) => eventos.filter((x) => x.time_id === tm.id && x.tipo === tipo).length;
     const limiteFaltas = futsal ? 5 : Infinity; // futsal: a partir da 6ª, tiro livre sem barreira
+    const tempoDoLance = (x) => {
+      const d = duracaoDe(t, x.periodo);
+      return d && x.segundo > d ? `${mmss(d)}<br>+${mmss(x.segundo - d)}` : mmss(x.segundo);
+    };
     const nomeJog = (cid) => (cid ? porId.get(cid)?.nome : null);
 
     const coluna = (tm, lado) => `
@@ -105,13 +131,14 @@ export async function telaJogo(id) {
           <div class="placar-time"><span class="bolinha" style="background:${ta.cor}"></span><b>${e(ta.nome)}</b></div>
           <div class="placar-numeros"><b>${j.gols_a ?? 0}</b><span>×</span><b>${j.gols_b ?? 0}</b></div>
           <div class="placar-time"><span class="bolinha" style="background:${tb.cor}"></span><b>${e(tb.nome)}</b></div>
-          <div class="cronometro ${rodando ? "rodando" : ""}">
+          <div id="cronometro" class="cronometro ${rodando ? "rodando" : ""} ${sit.classe}">
             ${j.encerrado
               ? `<span class="periodo">ENCERRADO${teveDisputa ? ` · PÊNALTIS ${pen(ta)} × ${pen(tb)}` : ""}</span>`
               : naDisputa
               ? `<span class="periodo">DISPUTA DE PÊNALTIS</span><span class="tempo rodando">${pen(ta)} × ${pen(tb)}</span>`
               : `<span class="periodo">${rodando ? `<span class="selo-vivo">AO VIVO</span> ` : comecou ? "PAUSADO · " : ""}${nomePeriodo(j.periodo).toUpperCase()}</span>
-                 <span id="relogio" class="tempo">${mmss(segundosDe(j))}</span>`}
+                 <span id="relogio" class="tempo">${sit.tempo}</span>
+                 <span id="relogio-extra" class="extra">${sit.extra}</span>`}
           </div>
           ${naDisputa ? `
           <div class="cobrancas">
@@ -125,6 +152,13 @@ export async function telaJogo(id) {
               ? `<button type="button" class="botao secundario" data-acao="pausar">⏸ Pausar</button>`
               : `<button type="button" class="botao" data-acao="iniciar">▶ ${comecou && j.cronometro_seg > 0 ? "Continuar" : `Começar ${nomePeriodo(j.periodo)}`}</button>`}
             ${rodando || j.cronometro_seg > 0 ? `<button type="button" class="botao secundario" data-acao="fimPeriodo">Fim do ${nomePeriodo(j.periodo)}</button>` : ""}
+          </div>
+          <div class="acrescimo">
+            ${dur
+              ? `<span>Acréscimo: <b>${(j.acrescimo_seg ?? 0) / 60} min</b></span>
+                 <button type="button" class="botao secundario pequeno" data-acao="acrescimo" data-delta="-60" ${(j.acrescimo_seg ?? 0) <= 0 ? "disabled" : ""} aria-label="Tirar 1 minuto de acréscimo">−1 min</button>
+                 <button type="button" class="botao secundario pequeno" data-acao="acrescimo" data-delta="60" aria-label="Dar 1 minuto de acréscimo">+1 min</button>`
+              : `<button type="button" class="link-botao" data-acao="duracao">⏱ Definir quantos minutos tem cada tempo (para acréscimos)</button>`}
           </div>
           ${comecou ? `<button type="button" class="botao secundario encerrar-jogo" data-acao="encerrarJogo">Encerrar jogo</button>` : ""}`}
         </div>
@@ -146,7 +180,7 @@ export async function telaJogo(id) {
             const quem = nomeJog(x.cadastro_id);
             return `
             <div class="lance">
-              <span class="lance-tempo">${x.periodo === PENALTIS ? "" : mmss(x.segundo)}<small>${siglaPeriodo(x.periodo)}</small></span>
+              <span class="lance-tempo">${x.periodo === PENALTIS ? "" : tempoDoLance(x)}<small>${siglaPeriodo(x.periodo)}</small></span>
               <span class="lance-emoji">${emoji}</span>
               <span class="item-corpo">
                 <span class="item-titulo">${rotulo}${quem ? " · " + e(quem) : ""}</span>
@@ -197,6 +231,23 @@ export async function telaJogo(id) {
     aviso(`${emoji} ${rotulo} · ${tm.nome}`);
   }
 
+  // Duração dos tempos fica no torneio (vale para todos os jogos dele)
+  async function definirDuracao() {
+    const atual = t.minutos_tempo ?? "";
+    const r = prompt("Quantos minutos tem cada tempo? (deixe vazio para não usar)", atual);
+    if (r === null) return;
+    const min = r.trim() === "" ? null : Math.round(Number(r.replace(",", ".")));
+    if (min !== null && !(min >= 1 && min <= 90)) return aviso("Digite um número de 1 a 90", "erro");
+    const rp = prompt("E cada tempo da prorrogação? (vazio = igual ao tempo normal)", t.minutos_prorrogacao ?? "");
+    const minP = rp === null || rp.trim() === "" ? null : Math.round(Number(rp.replace(",", ".")));
+    if (minP !== null && !(minP >= 1 && minP <= 30)) return aviso("Prorrogação: de 1 a 30 minutos", "erro");
+    await db(supabase.from("torneios").update({ minutos_tempo: min, minutos_prorrogacao: minP }).eq("id", t.id), "Erro ao salvar duração");
+    t.minutos_tempo = min;
+    t.minutos_prorrogacao = minP;
+    aviso(min ? `Tempos de ${min} min` : "Sem duração definida");
+    desenhar();
+  }
+
   const pen = (tm) => eventos.filter((x) => x.time_id === tm.id && x.tipo === "penalti_gol").length;
 
   async function encerrarNormal() {
@@ -211,7 +262,7 @@ export async function telaJogo(id) {
       if (confirm(`Encerrar o jogo? ${placar}`)) encerrarNormal();
       return;
     }
-    const zerado = { cronometro_seg: 0, cronometro_inicio: null };
+    const zerado = { cronometro_seg: 0, cronometro_inicio: null, acrescimo_seg: 0 };
     menu(`${titulo} · empate ${j.gols_a ?? 0} × ${j.gols_b ?? 0}`, [
       ...(j.periodo <= 2 ? [{ rotulo: "⏱️ Ir para a prorrogação", fn: () => atualizarJogo({ periodo: 3, ...zerado }) }] : []),
       { rotulo: "🥅 Disputa de pênaltis", fn: () => atualizarJogo({ periodo: PENALTIS, ...zerado }) },
@@ -228,11 +279,18 @@ export async function telaJogo(id) {
       // fim do 1º tempo (normal ou da prorrogação): segue para o próximo
       if (j.periodo === 1 || j.periodo === 3) {
         if (!confirm(`Encerrar o ${nomePeriodo(j.periodo)}? O cronômetro volta para 00:00 no próximo tempo.`)) return;
-        return atualizarJogo({ periodo: j.periodo + 1, cronometro_seg: 0, cronometro_inicio: null });
+        return atualizarJogo({ periodo: j.periodo + 1, cronometro_seg: 0, cronometro_inicio: null, acrescimo_seg: 0 });
       }
       return decidirFim(`Fim do ${nomePeriodo(j.periodo)}`);
     },
     encerrarJogo: () => decidirFim("Encerrar jogo"),
+    acrescimo: ({ delta }) => {
+      const novo = Math.max(0, Math.min(30 * 60, (j.acrescimo_seg ?? 0) + Number(delta)));
+      vibrou = false;
+      atualizarJogo({ acrescimo_seg: novo });
+      aviso(novo ? `Acréscimo de ${novo / 60} min` : "Sem acréscimo");
+    },
+    duracao: definirDuracao,
     encerrarPenaltis: async () => {
       const a = pen(ta), b = pen(tb);
       if (a === b) return aviso(`Pênaltis empatados em ${a} × ${b} — continuem as cobranças`, "erro");
@@ -263,17 +321,31 @@ export async function telaJogo(id) {
       ...(!j.encerrado && (j.cronometro_seg > 0 || j.cronometro_inicio)
         ? [{ rotulo: "Zerar cronômetro deste tempo", fn: () => confirm("Zerar o cronômetro?") && atualizarJogo({ cronometro_seg: 0, cronometro_inicio: j.cronometro_inicio ? new Date().toISOString() : null }) }]
         : []),
+      { rotulo: "⏱ Minutos de cada tempo", fn: definirDuracao },
       { rotulo: "Voltar para os jogos", fn: () => ir(`#/torneio/${t.id}/jogos`) },
     ]),
   };
 
   desenhar();
 
+  let vibrou = false;
   const aindaAqui = () => location.hash === rota && document.body.contains(document.getElementById("app"));
   relogio = setInterval(() => {
     if (!aindaAqui()) return pararTimers();
     const el = document.getElementById("relogio");
-    if (el) el.textContent = mmss(segundosDe(j));
+    if (!el) return;
+    const sit = situacaoTempo(j, t, segundosDe(j));
+    el.textContent = sit.tempo;
+    document.getElementById("relogio-extra").textContent = sit.extra;
+    const caixa = document.getElementById("cronometro");
+    caixa.classList.toggle("acrescimo", sit.classe === "acrescimo");
+    caixa.classList.toggle("esgotado", sit.classe === "esgotado");
+    if (sit.classe === "esgotado" && j.cronometro_inicio && !vibrou) {
+      vibrou = true;
+      try { navigator.vibrate?.([300, 150, 300]); } catch {}
+      aviso("⏱ Tempo esgotado!");
+    }
+    if (sit.classe !== "esgotado") vibrou = false;
   }, 1000);
   // outros celulares podem estar marcando o mesmo jogo
   sincronia = setInterval(async () => {

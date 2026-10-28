@@ -66,7 +66,7 @@ export async function telaTorneios() {
 export async function telaFormTorneio(id) {
   const t = id
     ? await db(supabase.from("torneios").select("*").eq("id", id).single(), "Erro ao carregar torneio")
-    : { nome: "", esporte: "Futsal", categoria: "masculino", idade_min: null, idade_max: null, data_inicio: null, local: "", formato: "grupos_mata_mata", jogadores_por_time: 5 };
+    : { nome: "", esporte: "Futsal", categoria: "masculino", idade_min: null, idade_max: null, data_inicio: null, local: "", formato: "grupos_mata_mata", jogadores_por_time: 5, minutos_tempo: null, minutos_prorrogacao: null };
   const cads = await carregarCadastros();
   const esportes = [...new Set([...ESPORTES, ...cads.flatMap((c) => c.esportes)])];
   const radio = (nome, valor, rotulo) =>
@@ -106,6 +106,11 @@ export async function telaFormTorneio(id) {
             <button type="button" data-acao="mais" aria-label="Mais">+</button>
           </div>
         </div>
+        <div class="linha">
+          <div class="campo"><label for="ft-min-tempo">Minutos de cada tempo <small>(opcional)</small></label><input id="ft-min-tempo" name="minutos_tempo" type="number" inputmode="numeric" min="1" max="90" placeholder="Ex.: 20" value="${t.minutos_tempo ?? ""}"></div>
+          <div class="campo"><label for="ft-min-prorrog">Cada tempo da prorrogação <small>(opcional)</small></label><input id="ft-min-prorrog" name="minutos_prorrogacao" type="number" inputmode="numeric" min="1" max="30" placeholder="Ex.: 5" value="${t.minutos_prorrogacao ?? ""}"></div>
+        </div>
+        <p class="suave pequeno" style="margin:-6px 2px 0">Com a duração definida, o cronômetro do jogo ao vivo avisa quando o tempo acaba e permite dar acréscimos.</p>
         <button type="button" class="botao cheio" data-acao="salvar">${id ? "Salvar alterações" : "Criar e escolher jovens →"}</button>
       </form>
     </div>`, {
@@ -124,8 +129,12 @@ export async function telaFormTorneio(id) {
         idade_max: num(f.idade_max.value),
         formato: f.querySelector('input[name="formato"]:checked')?.value,
         jogadores_por_time: Number(f.jogadores_por_time.value) || 5,
+        minutos_tempo: num(f.minutos_tempo.value),
+        minutos_prorrogacao: num(f.minutos_prorrogacao.value),
       };
       if (dados.nome.length < 2) return aviso("Dê um nome ao torneio", "erro");
+      if (dados.minutos_tempo != null && !(dados.minutos_tempo >= 1 && dados.minutos_tempo <= 90)) return aviso("Minutos de cada tempo: de 1 a 90", "erro");
+      if (dados.minutos_prorrogacao != null && !(dados.minutos_prorrogacao >= 1 && dados.minutos_prorrogacao <= 30)) return aviso("Prorrogação: de 1 a 30 minutos", "erro");
       if (dados.idade_min != null && dados.idade_max != null && dados.idade_min > dados.idade_max) return aviso("Idade mínima maior que a máxima", "erro");
       if (id) {
         await db(supabase.from("torneios").update(dados).eq("id", id), "Erro ao salvar");
