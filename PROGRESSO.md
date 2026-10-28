@@ -1,4 +1,4 @@
-# Onde paramos — 27/10/2026
+# Onde paramos — 28/10/2026
 
 ## O que já está pronto e no ar
 
@@ -20,32 +20,25 @@ mas o banco ainda **não tem a coluna**. Se publicar agora, os cadastros novos v
    com a anon key não pode dar erro `42703`.
 4. Só então publicar (comando no README).
 
-## Painel novo (torneios) — em construção
+## Painel novo (torneios) — código pronto, falta testar com o banco
 
-Telas aprovadas no protótipo: Início, Jovens, Ficha do jovem, Torneios, Criar torneio,
-Torneio › Inscritos / Times / Jogos / Tabela.
+Tudo escrito (ainda não publicado):
+- `admin.html` + `css/painel.css` + `js/painel/`:
+  - `app.js` — login, rotas por `#`, menu inferior.
+  - `nucleo.js` — acesso ao banco, bottom sheet, avisos, ícones, utilidades.
+  - `jovens.js` — Início, lista com busca/filtros/seleção, ficha e edição do jovem.
+  - `torneios.js` — lista, criar/editar torneio, abas Inscritos / Times / Jogos / Tabela.
+  - `chaveamento.js` — regras dos torneios, testadas (`node tests/chaveamento.test.mjs`).
+- O `js/admin.js` antigo foi removido.
+- Testado no navegador (localhost): Início, Jovens e Ficha funcionam com os dados reais.
+  As telas de torneio mostram o aviso “rode o torneios.sql” até o banco ter as tabelas.
 
-Feito:
-- `supabase/torneios.sql` — estrutura do banco (ainda não rodado).
-- `js/painel/chaveamento.js` — regras dos torneios, testadas (`node tests/chaveamento.test.mjs`):
-  todos contra todos, divisão em grupos, mata-mata com quem passa direto, próxima fase,
-  classificação (pontos, vitórias, saldo, gols), classificados dos grupos e sorteio de
-  times equilibrado por idade.
-
-Falta (próximos passos, nesta ordem):
-1. `css/painel.css` — estilos do app (menu inferior, abas, cartões, "bottom sheet", aviso/toast).
-2. Substituir `admin.html` + `js/admin.js` por um app de uma página com rotas por `#`:
-   `#/` início · `#/jovens` · `#/jovem/:id` · `#/torneios` · `#/torneios/novo` ·
-   `#/torneio/:id/inscritos|times|jogos|tabela`. Manter o login atual (Supabase Auth + tabela `admins`).
-3. Jovens: busca, filtros (inclui menino/menina), seleção de vários → "Adicionar a torneio";
-   ficha com WhatsApp, edição, torneios do jovem.
-4. Torneio › Inscritos: sugerir quem combina (esporte, categoria, idade, topa campeonato) +
-   "Adicionar todos" / escolher um a um.
-5. Times: sortear (`sortearTimes`), criar/renomear/excluir time, mover jogador, capitão.
-6. Jogos: gerar conforme o formato, lançar placar e gols por jogador, pênaltis no mata-mata,
-   "Gerar próxima fase", enviar no WhatsApp.
-7. Tabela: classificação por grupo, chave do mata-mata, campeão, artilharia.
-8. Rodar `torneios.sql`, testar tudo no celular e publicar.
+Próximos passos:
+1. Rodar `supabase/torneios.sql` (ver seção acima).
+2. Testar um torneio de ponta a ponta (criar → inscrever → sortear times → gerar jogos →
+   lançar placares → próxima fase → campeão) no celular.
+3. Apagar os cadastros de teste (“TESTE Claude”, “Teste Formulario”).
+4. Publicar no Cloudflare (comando no README).
 
 ## Outras ideias anotadas
 - Campo "Cadastrado por" (quem da equipe fez o cadastro) — sugerido, ainda não confirmado.
