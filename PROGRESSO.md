@@ -24,7 +24,8 @@ Publicado:
   - `nucleo.js` — acesso ao banco, bottom sheet, avisos, ícones, utilidades.
   - `jovens.js` — Início, lista com busca/filtros/seleção, ficha e edição do jovem.
   - `torneios.js` — lista, criar/editar torneio, abas Inscritos / Times / Jogos / Tabela.
-  - `aovivo.js` — jogo ao vivo (`#/jogo/:id`): cronômetro por tempo, gol/falta/cartões/bola fora
+  - `aovivo.js` — jogo ao vivo (`#/jogo/:id`): cronômetro por tempo (1º/2º tempo, prorrogação em
+    2 tempos, disputa de pênaltis = período 5), gol/falta/cartões/bola fora
     por time e jogador, lance a lance com desfazer, faltas por tempo, sincroniza entre celulares
     a cada 4 s. Placar e artilharia saem dos lances de gol.
   - `chaveamento.js` — regras dos torneios, testadas (`node tests/chaveamento.test.mjs`).

@@ -10,8 +10,13 @@ const TIPOS = {
   amarelo: ["🟨", "Amarelo"],
   vermelho: ["🟥", "Vermelho"],
   fora: ["↗️", "Bola fora"],
+  penalti_gol: ["✅", "Pênalti convertido"],
+  penalti_fora: ["❌", "Pênalti perdido"],
 };
-const PEDE_JOGADOR = new Set(["gol", "falta", "amarelo", "vermelho"]);
+const BOTOES_JOGO = ["gol", "falta", "amarelo", "vermelho", "fora"];
+const BOTOES_PENALTIS = ["penalti_gol", "penalti_fora"];
+const PEDE_JOGADOR = new Set(["gol", "falta", "amarelo", "vermelho", "penalti_gol", "penalti_fora"]);
+const PENALTIS = 5; // período da disputa de pênaltis
 
 let relogio = null;     // atualiza o cronômetro na tela a cada segundo
 let sincronia = null;   // busca lances de outros celulares a cada poucos segundos
@@ -19,7 +24,9 @@ let assinatura = "";    // detecta se algo mudou no banco
 
 const segundosDe = (j) => j.cronometro_seg + (j.cronometro_inicio ? Math.max(0, Math.floor((Date.now() - new Date(j.cronometro_inicio)) / 1000)) : 0);
 const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-const nomePeriodo = (p) => (p === 1 ? "1º tempo" : p === 2 ? "2º tempo" : `Prorrogação ${p - 2}`);
+// 1 e 2 = tempo normal · 3 e 4 = prorrogação · 5 = pênaltis
+const nomePeriodo = (p) => ["", "1º tempo", "2º tempo", "1º tempo da prorrogação", "2º tempo da prorrogação", "Pênaltis"][p] ?? `${p}º período`;
+const siglaPeriodo = (p) => ["", "1ºT", "2ºT", "1ºP", "2ºP", "PÊN"][p] ?? `${p}º`;
 
 function pararTimers() {
   clearInterval(relogio);
@@ -52,15 +59,23 @@ export async function telaJogo(id) {
     assinatura = JSON.stringify([j, eventos.map((x) => x.id)]);
     const rodando = !!j.cronometro_inicio;
     const comecou = rodando || j.cronometro_seg > 0 || j.periodo > 1 || eventos.length > 0;
-    const doPeriodo = (tm, tipo) => eventos.filter((x) => x.time_id === tm.id && x.tipo === tipo && x.periodo === j.periodo).length;
+    // no futsal, as faltas do 2º tempo seguem acumulando na prorrogação
+    const futsal = t.esporte === "Futsal";
+    const periodosDasFaltas = futsal && j.periodo >= 2 ? [2, 3, 4] : [j.periodo];
+    const doPeriodo = (tm, tipo) => eventos.filter((x) => x.time_id === tm.id && x.tipo === tipo && periodosDasFaltas.includes(x.periodo)).length;
+    const naDisputa = !j.encerrado && j.periodo === PENALTIS;
+    const teveDisputa = eventos.some((x) => x.periodo === PENALTIS);
+    const bolinhas = (tm) => eventos.filter((x) => x.time_id === tm.id && x.periodo === PENALTIS)
+      .map((x) => `<span class="cobranca ${x.tipo === "penalti_gol" ? "convertido" : "perdido"}">${icone(x.tipo === "penalti_gol" ? "check" : "x")}</span>`).join("")
+      || `<span class="suave pequeno">nenhuma cobrança</span>`;
     const total = (tm, tipo) => eventos.filter((x) => x.time_id === tm.id && x.tipo === tipo).length;
-    const limiteFaltas = t.esporte === "Futsal" ? 5 : Infinity; // futsal: a partir da 6ª, tiro livre sem barreira
+    const limiteFaltas = futsal ? 5 : Infinity; // futsal: a partir da 6ª, tiro livre sem barreira
     const nomeJog = (cid) => (cid ? porId.get(cid)?.nome : null);
 
     const coluna = (tm, lado) => `
       <div class="lado-lances">
         <p class="lado-nome"><span class="bolinha" style="background:${tm.cor}"></span>${e(tm.nome)}</p>
-        ${Object.entries(TIPOS).map(([tipo, [emoji, rotulo]]) => `
+        ${(naDisputa ? BOTOES_PENALTIS : BOTOES_JOGO).map((tipo) => [tipo, ...TIPOS[tipo]]).map(([tipo, emoji, rotulo]) => `
           <button type="button" class="botao-lance ${tipo}" data-acao="lance" data-tipo="${tipo}" data-lado="${lado}" ${j.encerrado ? "disabled" : ""}>
             <span>${emoji}</span>${rotulo}
           </button>`).join("")}
@@ -92,11 +107,19 @@ export async function telaJogo(id) {
           <div class="placar-time"><span class="bolinha" style="background:${tb.cor}"></span><b>${e(tb.nome)}</b></div>
           <div class="cronometro ${rodando ? "rodando" : ""}">
             ${j.encerrado
-              ? `<span class="periodo">ENCERRADO</span>`
+              ? `<span class="periodo">ENCERRADO${teveDisputa ? ` · PÊNALTIS ${pen(ta)} × ${pen(tb)}` : ""}</span>`
+              : naDisputa
+              ? `<span class="periodo">DISPUTA DE PÊNALTIS</span><span class="tempo rodando">${pen(ta)} × ${pen(tb)}</span>`
               : `<span class="periodo">${rodando ? `<span class="selo-vivo">AO VIVO</span> ` : comecou ? "PAUSADO · " : ""}${nomePeriodo(j.periodo).toUpperCase()}</span>
                  <span id="relogio" class="tempo">${mmss(segundosDe(j))}</span>`}
           </div>
-          ${j.encerrado ? "" : `
+          ${naDisputa ? `
+          <div class="cobrancas">
+            <div><b>${e(ta.nome)}</b><span>${bolinhas(ta)}</span></div>
+            <div><b>${e(tb.nome)}</b><span>${bolinhas(tb)}</span></div>
+          </div>
+          <button type="button" class="botao" data-acao="encerrarPenaltis" style="grid-column:1/-1">Encerrar disputa de pênaltis</button>` : ""}
+          ${j.encerrado || naDisputa ? "" : `
           <div class="controles-relogio">
             ${rodando
               ? `<button type="button" class="botao secundario" data-acao="pausar">⏸ Pausar</button>`
@@ -107,7 +130,7 @@ export async function telaJogo(id) {
         </div>
 
         <div class="numeros-lances">
-          ${numeros(`Faltas no ${nomePeriodo(j.periodo)}`, "falta", true)}
+          ${naDisputa ? "" : numeros(futsal && j.periodo >= 3 ? "Faltas (2º tempo + prorrogação)" : `Faltas no ${nomePeriodo(j.periodo)}`, "falta", true)}
           ${numeros("Amarelos", "amarelo", false)}
           ${numeros("Vermelhos", "vermelho", false)}
           ${numeros("Bolas fora", "fora", false)}
@@ -123,7 +146,7 @@ export async function telaJogo(id) {
             const quem = nomeJog(x.cadastro_id);
             return `
             <div class="lance">
-              <span class="lance-tempo">${mmss(x.segundo)}<small>${x.periodo}ºT</small></span>
+              <span class="lance-tempo">${x.periodo === PENALTIS ? "" : mmss(x.segundo)}<small>${siglaPeriodo(x.periodo)}</small></span>
               <span class="lance-emoji">${emoji}</span>
               <span class="item-corpo">
                 <span class="item-titulo">${rotulo}${quem ? " · " + e(quem) : ""}</span>
@@ -174,23 +197,49 @@ export async function telaJogo(id) {
     aviso(`${emoji} ${rotulo} · ${tm.nome}`);
   }
 
+  const pen = (tm) => eventos.filter((x) => x.time_id === tm.id && x.tipo === "penalti_gol").length;
+
+  async function encerrarNormal() {
+    await atualizarJogo({ encerrado: true, vencedor_id: null, cronometro_seg: segundosDe(j), cronometro_inicio: null, gols_a: j.gols_a ?? 0, gols_b: j.gols_b ?? 0 });
+    aviso("Jogo encerrado!");
+  }
+
+  // Quando o tempo acaba: encerrar, prorrogação ou pênaltis
+  function decidirFim(titulo) {
+    const placar = `${ta.nome} ${j.gols_a ?? 0} × ${j.gols_b ?? 0} ${tb.nome}`;
+    if ((j.gols_a ?? 0) !== (j.gols_b ?? 0)) {
+      if (confirm(`Encerrar o jogo? ${placar}`)) encerrarNormal();
+      return;
+    }
+    const zerado = { cronometro_seg: 0, cronometro_inicio: null };
+    menu(`${titulo} · empate ${j.gols_a ?? 0} × ${j.gols_b ?? 0}`, [
+      ...(j.periodo <= 2 ? [{ rotulo: "⏱️ Ir para a prorrogação", fn: () => atualizarJogo({ periodo: 3, ...zerado }) }] : []),
+      { rotulo: "🥅 Disputa de pênaltis", fn: () => atualizarJogo({ periodo: PENALTIS, ...zerado }) },
+      ...(j.mata_mata
+        ? [{ rotulo: "Escolher o vencedor sem marcar os pênaltis", fn: async () => { await atualizarJogo({ cronometro_seg: segundosDe(j), cronometro_inicio: null }); abrirEditor(); } }]
+        : [{ rotulo: "Encerrar empatado", fn: encerrarNormal }]),
+    ]);
+  }
+
   const acoes = {
     iniciar: () => atualizarJogo({ cronometro_inicio: new Date().toISOString(), gols_a: j.gols_a ?? 0, gols_b: j.gols_b ?? 0 }),
     pausar: () => atualizarJogo({ cronometro_seg: segundosDe(j), cronometro_inicio: null }),
     fimPeriodo: () => {
-      if (!confirm(`Encerrar o ${nomePeriodo(j.periodo)}? O cronômetro volta para 00:00 no próximo tempo.`)) return;
-      atualizarJogo({ periodo: j.periodo + 1, cronometro_seg: 0, cronometro_inicio: null });
-    },
-    encerrarJogo: async () => {
-      const empate = (j.gols_a ?? 0) === (j.gols_b ?? 0);
-      if (j.mata_mata && empate) {
-        // empate no mata-mata: o editor pergunta quem venceu nos pênaltis
-        await atualizarJogo({ cronometro_seg: segundosDe(j), cronometro_inicio: null });
-        return abrirEditor();
+      // fim do 1º tempo (normal ou da prorrogação): segue para o próximo
+      if (j.periodo === 1 || j.periodo === 3) {
+        if (!confirm(`Encerrar o ${nomePeriodo(j.periodo)}? O cronômetro volta para 00:00 no próximo tempo.`)) return;
+        return atualizarJogo({ periodo: j.periodo + 1, cronometro_seg: 0, cronometro_inicio: null });
       }
-      if (!confirm(`Encerrar o jogo ${ta.nome} ${j.gols_a ?? 0} × ${j.gols_b ?? 0} ${tb.nome}?`)) return;
-      await atualizarJogo({ encerrado: true, vencedor_id: null, cronometro_seg: segundosDe(j), cronometro_inicio: null, gols_a: j.gols_a ?? 0, gols_b: j.gols_b ?? 0 });
-      aviso("Jogo encerrado!");
+      return decidirFim(`Fim do ${nomePeriodo(j.periodo)}`);
+    },
+    encerrarJogo: () => decidirFim("Encerrar jogo"),
+    encerrarPenaltis: async () => {
+      const a = pen(ta), b = pen(tb);
+      if (a === b) return aviso(`Pênaltis empatados em ${a} × ${b} — continuem as cobranças`, "erro");
+      const vencedor = a > b ? ta : tb;
+      if (!confirm(`${vencedor.nome} venceu nos pênaltis por ${Math.max(a, b)} × ${Math.min(a, b)}. Encerrar o jogo?`)) return;
+      await atualizarJogo({ encerrado: true, vencedor_id: vencedor.id, cronometro_inicio: null, gols_a: j.gols_a ?? 0, gols_b: j.gols_b ?? 0 });
+      aviso(`🏆 ${vencedor.nome} venceu nos pênaltis!`);
     },
     lance: ({ tipo, lado }) => {
       const tm = lado === "a" ? ta : tb;

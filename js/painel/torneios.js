@@ -154,15 +154,27 @@ export async function carregarTorneio(id) {
     db(supabase.from("jogos").select("*").eq("torneio_id", id).order("rodada").order("ordem").order("id")),
     carregarCadastros(),
   ]);
-  const gols = jogos.length
-    ? await db(supabase.from("gols").select("*").in("jogo_id", jogos.map((j) => j.id)))
-    : [];
+  const ids = jogos.map((j) => j.id);
+  const [gols, penaltis] = ids.length
+    ? await Promise.all([
+      db(supabase.from("gols").select("*").in("jogo_id", ids)),
+      db(supabase.from("eventos").select("jogo_id, time_id").eq("tipo", "penalti_gol").in("jogo_id", ids)),
+    ])
+    : [[], []];
   const porId = new Map(cads.map((c) => [c.id, c]));
   ctx = {
-    t, times, jogos, gols, cads, porId,
+    t, times, jogos, gols, penaltis, cads, porId,
     inscritos: inscritos.filter((i) => porId.has(i.cadastro_id)),
     timePorId: new Map(times.map((x) => [x.id, x])),
   };
+}
+
+// Placar da disputa de pênaltis marcada ao vivo ("4×3"), ou "" se não houve
+function placarPenaltis(j) {
+  const doJogo = ctx.penaltis.filter((x) => x.jogo_id === j.id);
+  if (!doJogo.length) return "";
+  const n = (time) => doJogo.filter((x) => x.time_id === time).length;
+  return `${n(j.time_a)}×${n(j.time_b)}`;
 }
 
 const ABAS = { inscritos: "Inscritos", times: "Times", jogos: "Jogos", tabela: "Tabela" };
@@ -514,7 +526,8 @@ function textoJogosZap() {
     if (j.time_b == null) continue;
     const fase = j.mata_mata ? j.fase : `${j.fase}${ctx.t.formato === "grupos_mata_mata" ? " · Rodada " + j.rodada : ""}`;
     if (fase !== faseAtual) { linhas.push("", `*${fase}*`); faseAtual = fase; }
-    const placar = j.encerrado ? ` ${j.gols_a} × ${j.gols_b} ` : " × ";
+    const pen = j.encerrado && placarPenaltis(j) ? ` (pên. ${placarPenaltis(j)})` : "";
+    const placar = j.encerrado ? ` ${j.gols_a} × ${j.gols_b}${pen} ` : " × ";
     linhas.push(`${nome(j.time_a)}${placar}${nome(j.time_b)}${!j.encerrado && j.data_hora ? " — " + dataHora(j.data_hora) : ""}`);
   }
   return linhas.join("\n");
@@ -585,7 +598,7 @@ function abaJogos() {
     const aoVivo = !j.encerrado && (j.cronometro_inicio || j.cronometro_seg > 0 || j.periodo > 1);
     const mostraPlacar = j.encerrado || aoVivo;
     const quando = j.encerrado
-      ? (j.vencedor_id && j.gols_a === j.gols_b ? "PÊNALTIS" : "ENCERRADO")
+      ? (j.vencedor_id && j.gols_a === j.gols_b ? `PÊNALTIS${placarPenaltis(j) ? "<br>" + placarPenaltis(j) : ""}` : "ENCERRADO")
       : aoVivo ? `<span class="selo-vivo">AO VIVO</span>`
       : j.data_hora ? e(dataHora(j.data_hora)).toUpperCase() : "A JOGAR";
     return `
@@ -776,7 +789,7 @@ function abaTabela() {
           const v = vencedorDoJogo(j);
           return `<div class="item" style="cursor:default">
             <span class="item-corpo"><span class="item-titulo">${nome(j.time_a)} ${j.encerrado ? `${j.gols_a} × ${j.gols_b}` : "×"} ${nome(j.time_b)}</span>
-            ${v ? `<span class="item-sub">Classificado: ${nome(v)}${j.vencedor_id && j.gols_a === j.gols_b ? " (pênaltis)" : ""}</span>` : `<span class="item-sub">A jogar</span>`}</span></div>`;
+            ${v ? `<span class="item-sub">Classificado: ${nome(v)}${j.vencedor_id && j.gols_a === j.gols_b ? ` (pênaltis${placarPenaltis(j) ? " " + placarPenaltis(j).replace("×", " × ") : ""})` : ""}</span>` : `<span class="item-sub">A jogar</span>`}</span></div>`;
         }).join("")}
       </div>`).join("")}
     <p class="fase-titulo">Artilharia</p>

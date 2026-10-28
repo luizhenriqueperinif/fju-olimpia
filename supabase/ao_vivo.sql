@@ -14,7 +14,7 @@ create table if not exists public.eventos (
   jogo_id      bigint not null references public.jogos (id) on delete cascade,
   time_id      bigint not null references public.times (id) on delete cascade,
   cadastro_id  bigint references public.cadastros (id) on delete set null,  -- vazio = não identificado
-  tipo         text not null check (tipo in ('gol', 'falta', 'amarelo', 'vermelho', 'fora')),
+  tipo         text not null,
   periodo      int not null default 1,
   segundo      int not null default 0,
   criado_em    timestamptz not null default now()
@@ -26,3 +26,8 @@ grant select, insert, update, delete on public.eventos to authenticated;
 drop policy if exists "admins gerenciam" on public.eventos;
 create policy "admins gerenciam" on public.eventos for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
+
+-- Tipos de lance (inclui a disputa de pênaltis: período 5)
+alter table public.eventos drop constraint if exists eventos_tipo_check;
+alter table public.eventos add constraint eventos_tipo_check
+  check (tipo in ('gol', 'falta', 'amarelo', 'vermelho', 'fora', 'penalti_gol', 'penalti_fora'));
