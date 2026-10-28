@@ -27,7 +27,7 @@ Tudo roda de graça: o banco fica no **Supabase** e o site no **Netlify**.
    ```sql
    insert into public.admins (email) values ('seuemail@gmail.com');
    ```
-6. Em **Project Settings → API** copie a **Project URL** e a chave **anon public**
+6. Em **Project Settings → API** copie a **Project URL** e a **Publishable key** (Project Settings → API Keys)
    e cole em `js/config.js`.
 
 ## No ar (Cloudflare Pages)
